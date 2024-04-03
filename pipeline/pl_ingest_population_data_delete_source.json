@@ -1,0 +1,199 @@
+{
+	"name": "pl_ingest_population_data_delete_source",
+	"properties": {
+		"description": "This pipeline ingest data from blob storage to adls storage.\nData in source i.e. blob storage is in gzip format and data when loaded iin adls is in form tsv.",
+		"activities": [
+			{
+				"name": "check if file exists",
+				"type": "Validation",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_population_raw_gz",
+						"type": "DatasetReference"
+					},
+					"timeout": "0.00:02:00",
+					"sleep": 10,
+					"minimumSize": 1024
+				}
+			},
+			{
+				"name": "Get file  Metadata",
+				"type": "GetMetadata",
+				"dependsOn": [
+					{
+						"activity": "check if file exists",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:10:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataset": {
+						"referenceName": "ds_population_raw_gz",
+						"type": "DatasetReference"
+					},
+					"fieldList": [
+						"columnCount",
+						"size",
+						"exists"
+					],
+					"storeSettings": {
+						"type": "AzureBlobStorageReadSettings",
+						"recursive": true,
+						"enablePartitionDiscovery": false
+					},
+					"formatSettings": {
+						"type": "DelimitedTextReadSettings"
+					}
+				}
+			},
+			{
+				"name": "If Column count matches",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Get file  Metadata",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@equals(activity('Get file  Metadata').output.columnCount, 13)",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "column not match",
+							"description": "",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": "Column count does not match",
+								"errorCode": "columnCount Does Not Match"
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Copy population data",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.00:10:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "DelimitedTextSource",
+									"storeSettings": {
+										"type": "AzureBlobStorageReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "DelimitedTextReadSettings"
+									}
+								},
+								"sink": {
+									"type": "DelimitedTextSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "DelimitedTextWriteSettings",
+										"quoteAllText": true,
+										"fileExtension": ".txt"
+									}
+								},
+								"enableStaging": false,
+								"translator": {
+									"type": "TabularTranslator",
+									"typeConversion": true,
+									"typeConversionSettings": {
+										"allowDataTruncation": true,
+										"treatBooleanAsNumber": false
+									}
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_population_raw_gz",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_population_raw_tsv",
+									"type": "DatasetReference"
+								}
+							]
+						},
+						{
+							"name": "Delete source file",
+							"type": "Delete",
+							"dependsOn": [
+								{
+									"activity": "Copy population data",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_population_raw_gz",
+									"type": "DatasetReference"
+								},
+								"logStorageSettings": {
+									"linkedServiceName": {
+										"referenceName": "ls_adls_covidreportinggen20085_tgt",
+										"type": "LinkedServiceReference"
+									},
+									"path": "log-file"
+								},
+								"enableLogging": true,
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"folder": {
+			"name": "covid-reporting"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-04-03T10:41:50Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
