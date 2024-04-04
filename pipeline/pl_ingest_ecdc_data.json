@@ -1,10 +1,10 @@
 {
-	"name": "pl_ingest_cases_deaths_data",
+	"name": "pl_ingest_ecdc_data",
 	"properties": {
 		"description": "This pipeline pulls data from given url and copies data to the target location specified",
 		"activities": [
 			{
-				"name": "copy cases deaths data",
+				"name": "copy ECDC data",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -49,18 +49,38 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_cases_deaths_raw_csv_http",
-						"type": "DatasetReference"
+						"referenceName": "ds_ecdc_raw_csv_http",
+						"type": "DatasetReference",
+						"parameters": {
+							"relativeURL": {
+								"value": "@pipeline().parameters.sourceRelativeURL",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_cases_deaths_raw_csv_dl",
-						"type": "DatasetReference"
+						"referenceName": "ds_ecdc_raw_csv_dl",
+						"type": "DatasetReference",
+						"parameters": {
+							"fileName": {
+								"value": "@pipeline().parameters.sinkFileName",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
 		],
+		"parameters": {
+			"sourceRelativeURL": {
+				"type": "string"
+			},
+			"sinkFileName": {
+				"type": "string"
+			}
+		},
 		"folder": {
 			"name": "covid-reporting-pipelines"
 		},
