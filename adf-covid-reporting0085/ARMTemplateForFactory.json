@@ -807,25 +807,34 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/tr_ingest_ecdc_data')]",
+			"name": "[concat(parameters('factoryName'), '/tr_ecdc_data')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"annotations": [],
-				"runtimeState": "Stopped",
-				"pipelines": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_ingest_ecdc_data_using_lookup",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
 				"type": "ScheduleTrigger",
 				"typeProperties": {
 					"recurrence": {
-						"frequency": "Day",
-						"interval": 1,
-						"startTime": "2024-04-04T12:30:00",
-						"timeZone": "India Standard Time",
-						"schedule": {}
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2024-04-04T14:49:00",
+						"timeZone": "India Standard Time"
 					}
 				}
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_ecdc_data_using_lookup')]"
+			]
 		}
 	]
 }
