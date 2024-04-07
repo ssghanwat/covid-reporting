@@ -28,7 +28,11 @@
 						"referenceName": "ds_processed_cases_and_deaths",
 						"type": "DatasetReference"
 					},
-					"name": "CasesAndDeathsSink"
+					"name": "CasesAndDeathsSink",
+					"rejectedDataLinkedService": {
+						"referenceName": "ls_adls_covidreportinggen20085",
+						"type": "LinkedServiceReference"
+					}
 				}
 			],
 			"transformations": [
@@ -113,12 +117,14 @@
 				"     skipDuplicateMapOutputs: true) ~> selectForSink",
 				"selectForSink sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     partitionFileNames:['cases_and_deaths.csv'],",
 				"     truncate: true,",
 				"     umask: 0022,",
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> CasesAndDeathsSink"
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> CasesAndDeathsSink"
 			]
 		}
 	}
